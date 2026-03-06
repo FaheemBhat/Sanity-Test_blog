@@ -1,0 +1,89 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { createClient } from "@sanity/client";
+import { toHTML } from "@portabletext/to-html";
+
+const client = createClient({
+  projectId: "8y6nawl6",
+  dataset: "production",
+  apiVersion: "2024-01-01",
+  useCdn: true
+});
+
+const { slug } = Astro.params;
+
+// Fetch single post
+const query = `*[_type == "post" && slug.current == $slug][0]{
+  title,
+  body[]{
+    ...,
+    _type == "image" => {
+      ...,
+      asset->{ url }
+    }
+  }
+}`;
+
+const post = await client.fetch(query, { slug });
+
+// Convert Sanity rich text → HTML
+const content = toHTML(post.body, {
+  components: {
+    types: {
+      image: ({ value }: { value: { asset?: { url?: string }; alt?: string } }) => {
+        if (!value?.asset?.url) return "";
+        return `<img src="${value.asset.url}" alt="${value.alt ?? ""}" />`;
+      }
+    }
+  }
+});
+
+// Required for dynamic routes
+export async function getStaticPaths() {
+ const c = createClient({
+  projectId: "8y6nawl6",
+  dataset: "production",
+  apiVersion: "2024-01-01",
+  useCdn: true
+ });
+ const posts = await c.fetch(`*[_type == "post"]{ "slug": slug.current }`);
+
+ return posts.map((post: { slug: string }) => ({
+  params: { slug: post.slug }
+ }));
+}
+---
+
+<Layout title={`Blog: ${post.title}`}>
+ <div class="blog-wrapper">
+  <article>
+   <Fragment set:html={content} />
+  </article>
+ </div>
+</Layout>
+
+<style is:global>
+ article {
+  margin: 50px 0 0 0;
+ }
+ .blog-wrapper img,
+ .blog-wrapper svg {
+  width: 100% !important;
+  height: auto !important;
+ }
+ h1 {
+  margin: 0 0 20px 0;
+ }
+ h1,h2,h3,h4,h5,h6 {
+  font-family: var(--heading-font);
+  font-size: 1.2rem;
+  font-weight: 600;
+ }
+ .blog-wrapper {
+  padding: 15px;
+  max-width: 60rem;
+  margin: 30px auto;
+  display: flex;
+  justify-content: center;
+ }
+</style>
