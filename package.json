@@ -1,5 +1,11 @@
 {
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
   "dependencies": {
+    "@astrojs/vercel": "^9.0.4",
     "@portabletext/to-html": "^5.0.2",
     "@sanity/client": "^7.16.0",
     "astro": "^5.18.0"
