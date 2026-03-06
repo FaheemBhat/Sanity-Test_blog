@@ -1,0 +1,102 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { createClient } from "@sanity/client";
+
+const client = createClient({
+  projectId: "8y6nawl6",
+  dataset: "production",
+  apiVersion: "2024-01-01",
+  useCdn: true
+});
+
+const posts = await client.fetch(`*[_type == "post"] | order(publishedAt desc) {
+  title,
+  "slug": slug.current,
+  "mainImage": mainImage.asset->url,
+  publishedAt,
+  categories[]->{ title }
+}`);
+---
+
+<Layout title="Blog">
+  <div class="listing-wrapper">
+    <h1>Blog</h1>
+    <div class="posts-grid">
+      {posts.map((post: {
+        title: string;
+        slug: string;
+        mainImage?: string;
+        publishedAt?: string;
+        categories?: { title: string }[];
+      }) => (
+        <a href={`/${post.slug}`} class="post-card">
+          {post.mainImage && (
+            <img src={post.mainImage} alt={post.title} />
+          )}
+          <div class="post-info">
+            {post.categories?.length && (
+              <span class="category">{post.categories[0].title}</span>
+            )}
+            <h2>{post.title}</h2>
+            {post.publishedAt && (
+              <time>{new Date(post.publishedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</time>
+            )}
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .listing-wrapper {
+    max-width: 60rem;
+    margin: 40px auto;
+    padding: 0 15px;
+  }
+  h1 {
+    font-size: 2rem;
+    margin-bottom: 30px;
+  }
+  .posts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+  }
+  .post-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+  .post-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  .post-card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+  }
+  .post-info {
+    padding: 16px;
+  }
+  .category {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6b7280;
+  }
+  h2 {
+    font-size: 1.1rem;
+    margin: 8px 0;
+    line-height: 1.4;
+  }
+  time {
+    font-size: 0.85rem;
+    color: #9ca3af;
+  }
+</style>
