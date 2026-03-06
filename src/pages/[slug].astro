@@ -38,20 +38,7 @@ const content = toHTML(post.body, {
   }
 });
 
-// Required for dynamic routes
-export async function getStaticPaths() {
- const c = createClient({
-  projectId: "8y6nawl6",
-  dataset: "production",
-  apiVersion: "2024-01-01",
-  useCdn: true
- });
- const posts = await c.fetch(`*[_type == "post"]{ "slug": slug.current }`);
 
- return posts.map((post: { slug: string }) => ({
-  params: { slug: post.slug }
- }));
-}
 ---
 
 <Layout title={`Blog: ${post.title}`}>
